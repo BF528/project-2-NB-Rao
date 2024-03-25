@@ -1,56 +1,104 @@
+import pandas
+
+sample_csv = pandas.read_csv('full-sample_sheet.csv', index_col='name')
+CONDITIONS = set(sample_csv['condition'].tolist())
+REPS = set(sample_csv['replicate'].tolist())
+
 rule all:
-	input:
+    input:
+        expand('results/bams/{condition}_{rep}.sorted.bam.bai', condition=CONDITIONS, rep=REPS),
+        'results/multiqc_report.html',
+        expand('results/bigwigs/{condition}_{rep}.bw', condition=CONDITIONS, rep=REPS),
+        'results/multibw_summary.npz',
+        'results/correlation_plot.pdf'
 
 rule bowtie2_align:
-	input:
-	output:
-	threads: 16
-	params:
-	conda:
-		'envs/bowtie2_env.yml'
-	shell:
+    input:
+        'results/trimmed/{condition}_{rep}_trimmed.fastq.gz'
+    output:
+        'results/bams/{condition}_{rep}.bam'
+    threads: 16
+    params:
+        index='results/genome'
+    conda:
+        'envs/bowtie2_env.yml'
+    shell:
+        'bowtie2 -x {params.index} -U {input} | samtools view -bS - > {output}'
 
 rule samtools_sort:
-	input:
-	output:
-	conda:
-		'envs/samtools_env.yml'
-	shell:
+    input:
+        'results/bams/{condition}_{rep}.bam'
+    output:
+        'results/bams/{condition}_{rep}.sorted.bam'
+    conda:
+        'envs/samtools_env.yml'
+    shell:
+        'samtools sort {input} -o {output}'
 
 rule samtools_idx:
-	input:
-	output:
-	conda:
-		'envs/samtools_env.yml'
-	shell:
+    input:
+        'results/bams/{condition}_{rep}.sorted.bam'
+    output:
+        'results/bams/{condition}_{rep}.sorted.bam.bai'
+    conda:
+        'envs/samtools_env.yml'
+    shell:
+        'samtools index {input}'
+        
+rule samtools_flagstats:
+    input:
+        'results/bams/{condition}_{rep}.sorted.bam'
+    output:
+        'results/bams/{condition}_{rep}.flagstats'
+    conda:
+        'envs/samtools_env.yml'
+    shell:
+        'samtools flagstat {input} > {output}'
 
 rule multiqc:
-	input:
-	output:
-	params:
-	conda:
-		'envs/multiqc_env.yml'
-	shell:
+    input:
+        expand('results/fastqc/{condition}_{rep}_fastqc.zip', condition=CONDITIONS, rep=REPS),
+        expand('results/bams/{condition}_{rep}.sorted.bam', condition=CONDITIONS, rep=REPS)
+    output:
+        'results/multiqc_report.html'
+    params:
+        outdir='results'
+    conda:
+        'envs/multiqc_env.yml'
+    shell:
+        'multiqc -o {params.outdir} {input}'
 
 rule bamCoverage:
-	input:
-	output:
-	threads: 4
-	conda:
-		'envs/deeptools_env.yml'
-	shell:
+    input:
+        bam='results/bams/{condition}_{rep}.sorted.bam',
+    output:
+        'results/bigwigs/{condition}_{rep}.bw'
+    threads: 4
+    conda:
+        'envs/deeptools_env.yml'
+    shell:
+        'bamCoverage -b {input.bam} -o {output}'
+
 
 rule multiBwSummary:
-	input:
-	output:
-	conda:
-		'envs/deeptools_env.yml'
-	shell:
+    input:
+        expand('results/bigwigs/{condition}_{rep}.bw', condition=CONDITIONS, rep=REPS)
+    output:
+        'results/multibw_summary.npz'
+    conda:
+        'envs/deeptools_env.yml'
+    shell:
+        'multiBigwigSummary bins -b {input} -out {output}'
 
 rule plotCorrelation:
-	input:
-	output:
-	params:
-	conda:
-		'envs/deeptools_env.yml'
-	shell:
+    input:
+        'results/multibw_summary.npz'
+    output:
+        'results/correlation_plot.pdf'
+    params:
+        labels='INPsample_rep1,INPsample_rep2,RUNX1sample_rep1,RUNX1sample_rep2',
+        corr_method='pearson'
+    conda:
+        'envs/deeptools_env.yml'
+    shell:
+        'plotCorrelation -in {input} --corMethod {params.corr_method} --labels {params.labels} -o {output} --plotTitle "Pearson Correlation of Samples" --whatToPlot heatmap --colorMap RdYlBu --plotNumbers --removeOutliers'
