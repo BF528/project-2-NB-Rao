@@ -53,7 +53,7 @@ rule trimmomatic:
     output:
         'results/trimmed/{condition}_{rep}_trimmed.fastq.gz'
     params:
-        adapters='materials/project_2_chipseq/adapters.fa',
+        adapters='results/TruSeq3-SE.fa',
         outdir='results/trimmed'
     threads: 8
     conda:
