@@ -19,7 +19,25 @@ Here's what each rule does:
 `rule motifs`: Runs the findMotifsGenome.pl utility from HOMER to perform motif enrichment analysis on the filtered peaks.
 
 
+`Peak Calling`
+To identify regions of enrichment representing putative binding sites of the transcription factors, 
+peak calling was performed using HOMER v4.11 (Heinz et al., 2010). First, the sorted BAM files were converted 
+into tag directories using the makeTagDirectory command. Then, the findPeaks command was run for each ChIP sample, 
+using the corresponding input sample as a control, with the -style factor option to indicate a transcription factor 
+experiment. The resulting peak files were converted from HOMER's native format to BED format using the pos2bed.pl utility.
 
+`Reproducible Peak Identification`
+To identify a set of reproducible peaks, the intersection of peaks between replicates was computed using bedtools 
+intersect (Quinlan and Hall, 2010). The resulting set of reproducible peaks was further filtered to remove peaks 
+overlapping with blacklisted regions known to exhibit high signal artifacts, using bedtools intersect 
+with the -v option.
+
+`Peak Annotation and Motif Analysis`
+The filtered set of reproducible peaks was annotated to their nearest genomic features using the annotatePeaks.pl 
+utility from HOMER, with the GRCh38 (hg39) GENCODE annotation file as a reference. Finally, motif enrichment analysis 
+was performed on the annotated peaks using the findMotifsGenome.pl command from HOMER, with the GRCh38 reference genome 
+and default parameters for motif lengths (8, 10, and 12 bp) and maximum mismatches (8).
 
 If asked, you may also include any plots or figures in this notebook as well:
+
 
