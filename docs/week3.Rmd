@@ -6,7 +6,17 @@ date: '2024-03-01'
 
 Use this notebook to quickly write the methods for the week:
 
-
+Here's what each rule does:
+`rule all`: Specifies the final output files for the entire workflow, including tag directories, peak files in TXT and BED formats, reproducible peaks, filtered peaks, annotated peaks, and motif analysis results.
+`rule make_tag_dir`: Runs the makeTagDirectory command from HOMER to generate tag directories for each sample.
+`rule findPeaks`: Runs the findPeaks command from HOMER to identify peaks for each sample, using the corresponding input sample as a control.
+`rule convertPeakFiles`: Converts the peak files from HOMER's format to BED format using the pos2bed.pl utility.
+`rule intersect_peaks`: Uses bedtools intersect to find the intersection of peaks between replicates, creating a set of reproducible peaks.
+`rule filter_blacklist`: Filters out the reproducible peaks that overlap with blacklisted regions.
+`rule unzip_gtf`: Decompresses the GTF annotation file for use in peak annotation.
+`rule annotate_peaks`: Annotates the filtered peaks to their nearest genomic features using the annotatePeaks.pl utility from HOMER.
+`rule unzip_genome`: Decompresses the reference genome FASTA file for use in motif finding.
+`rule motifs`: Runs the findMotifsGenome.pl utility from HOMER to perform motif enrichment analysis on the filtered peaks.
 
 
 
