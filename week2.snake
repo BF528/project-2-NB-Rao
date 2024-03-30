@@ -10,7 +10,7 @@ rule all:
         'results/multiqc_report.html',
         expand('results/bigwigs/{condition}_{rep}.bw', condition=CONDITIONS, rep=REPS),
         'results/multibw_summary.npz',
-        'results/correlation_plot.pdf'
+        'results/plotCorrelation_heatmap.png'
 
 rule bowtie2_align:
     input:
@@ -89,16 +89,13 @@ rule multiBwSummary:
         'envs/deeptools_env.yml'
     shell:
         'multiBigwigSummary bins -b {input} -out {output}'
-
+        
 rule plotCorrelation:
     input:
-        'results/multibw_summary.npz'
+        "results/multibw_summary.npz"
     output:
-        'results/correlation_plot.pdf'
-    params:
-        labels='INPsample_rep1,INPsample_rep2,RUNX1sample_rep1,RUNX1sample_rep2',
-        corr_method='pearson'
+        "results/plotCorrelation_heatmap.png"
     conda:
-        'envs/deeptools_env.yml'
+        "envs/deeptools_env.yml"
     shell:
-        'plotCorrelation -in {input} --corMethod {params.corr_method} --labels {params.labels} -o {output} --plotTitle "Pearson Correlation of Samples" --whatToPlot heatmap --colorMap RdYlBu --plotNumbers --removeOutliers'
+        "plotCorrelation -in {input} --corMethod pearson --whatToPlot heatmap --colorMap RdYlBu --plotNumbers -o {output}"
