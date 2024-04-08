@@ -12,7 +12,7 @@ rule all:
 
 rule computeMatrix:
     input:
-        bigwig='results/bigwigs/{condition}_{rep}.bw',
+        bigwig='results/bigwigs/RUNX1_{rep}.bw',
         genes='results/hg38_genes.bed'
     output:
         bw_tss = 'results/matrices/RUNX1_{rep}.matrix.gz'
