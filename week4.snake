@@ -1,18 +1,36 @@
+import pandas
+
+sample_csv = pandas.read_csv('full-sample_sheet.csv', index_col='name')
+
+CONDITIONS = set(sample_csv['condition'].tolist())
+REPS = set(sample_csv['replicate'].tolist())
+
 rule all:
-	input:
+    input:
+        expand('results/matrices/{condition}_{rep}.matrix.gz', condition=CONDITIONS, rep=REPS),
+        expand('results/plots/{condition}_{rep}.pdf', condition=CONDITIONS, rep=REPS)
 
 rule computeMatrix:
-	input:
-	output:
-	params:
-	conda:
-		'envs/deeptools_env.yml'
-	threads: 4
-	shell:
+    input:
+        bigwig='results/bigwigs/{condition}_{rep}.bw',
+        genes='results/hg38_genes.bed'
+    output:
+        'results/matrices/{condition}_{rep}.matrix.gz'
+    params:
+        outfile='results/matrices/{condition}_{rep}.matrix'
+    conda:
+        'envs/deeptools_env.yml'
+    threads: 16
+    shell:
+        'computeMatrix scale-regions -S {input.bigwig} -R {input.genes} -out {params.outfile} -b 2000 -a 2000 --skipZeros'
 
 rule plotMatrix:
-	input:
-	output:
-	conda:
-		'envs/deeptools_env.yml'
-	shell:
+    input:
+        'results/matrices/{condition}_{rep}.matrix.gz'
+    output:
+        'results/plots/{condition}_{rep}.pdf'
+    conda:
+        'envs/deeptools_env.yml'
+    shell:
+        'plotProfile -m {input} -out {output} --plotTitle "Signal across gene bodies for {wildcards.condition}_{wildcards.rep}"'
+        
