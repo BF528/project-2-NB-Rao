@@ -7,30 +7,30 @@ REPS = set(sample_csv['replicate'].tolist())
 
 rule all:
     input:
-        expand('results/matrices/{condition}_{rep}.matrix.gz', condition=CONDITIONS, rep=REPS),
-        expand('results/plots/{condition}_{rep}.pdf', condition=CONDITIONS, rep=REPS)
+        expand('results/matrices/RUNX1_{rep}.matrix.gz', rep=REPS),
+        expand('results/plots/RUNX1_{rep}.png', rep=REPS)
 
 rule computeMatrix:
     input:
         bigwig='results/bigwigs/{condition}_{rep}.bw',
         genes='results/hg38_genes.bed'
     output:
-        'results/matrices/{condition}_{rep}.matrix.gz'
+        bw_tss = 'results/matrices/RUNX1_{rep}.matrix.gz'
     params:
-        outfile='results/matrices/{condition}_{rep}.matrix'
+        padding = 2000
     conda:
         'envs/deeptools_env.yml'
     threads: 16
     shell:
-        'computeMatrix scale-regions -S {input.bigwig} -R {input.genes} -out {params.outfile} -b 2000 -a 2000 --skipZeros'
+        'computeMatrix scale-regions -S {input.bigwig} -R {input.genes} -a {params.padding} -b {params.padding} -o {output.bw_tss}'
 
 rule plotMatrix:
     input:
-        'results/matrices/{condition}_{rep}.matrix.gz'
+        bw_tss = 'results/matrices/RUNX1_{rep}.matrix.gz'
     output:
-        'results/plots/{condition}_{rep}.pdf'
+        bw_tss_plot = 'results/plots/RUNX1_{rep}.png'
     conda:
         'envs/deeptools_env.yml'
     shell:
-        'plotProfile -m {input} -out {output} --plotTitle "Signal across gene bodies for {wildcards.condition}_{wildcards.rep}"'
+        'plotProfile -m {input.bw_tss} -out {output.bw_tss_plot}'
         
