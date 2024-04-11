@@ -14,9 +14,11 @@ rule all:
         'results/annotated_peaks.txt',
         'results/motifs.html'
 
+        
 rule make_tag_dir:
     input:
-        'results/bams/{condition}_{rep}.sorted.bam'
+        bam='results/bams/{condition}_{rep}.sorted.bam',
+        bai='results/bams/{condition}_{rep}.sorted.bam.bai'
     output:
         directory("results/tag_dirs/{condition}_{rep}")
     params:
@@ -24,7 +26,24 @@ rule make_tag_dir:
     conda:
         'envs/homer_env.yml'
     shell:
-        'makeTagDirectory {input} {output} -genome {params.genome}'
+        """
+        # Check if input BAM file exists
+        if [ ! -f {input.bam} ]; then
+            echo "Error: Input BAM file does not exist: {input.bam}"
+            exit 1
+        fi
+        # Check if input BAM index file exists
+        if [ ! -f {input.bai} ]; then
+            echo "Error: BAM index file does not exist: {input.bai}"
+            exit 1
+        fi
+        # Check if output directory exists
+        if [ ! -d {output} ]; then
+            mkdir -p {output}
+        fi
+        # Run makeTagDirectory command
+        makeTagDirectory {output} -genome {params.genome} {input.bam}
+        """
 
 rule findPeaks:
     input:
@@ -104,4 +123,4 @@ rule motifs:
         'envs/homer_env.yml'
     shell:
         'findMotifsGenome.pl {input.peaks} {params.genome} -fasta {input.genome} -size 200 -len 8,10,12 -p 8 > {output}'
-
+        
