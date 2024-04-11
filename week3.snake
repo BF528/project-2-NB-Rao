@@ -12,7 +12,7 @@ rule all:
         'results/reproducible_peaks.bed',
         'results/filtered_peaks.bed',
         'results/annotated_peaks.txt',
-        'results/motifs.html'
+        expand('results/motifs/')
 
         
 rule make_tag_dir:
@@ -94,6 +94,7 @@ rule unzip_gtf:
     shell:
         'gunzip -c {input} > {output}'
 
+
 rule annotate_peaks:
     input:
         peaks='results/filtered_peaks.bed',
@@ -102,8 +103,12 @@ rule annotate_peaks:
         'results/annotated_peaks.txt'
     conda:
         'envs/homer_env.yml'
+    params:
+        genome='results/genome.fa'  
     shell:
-        'annotatePeaks.pl {input.peaks} {params.genome} -gtf {input.gtf} > {output}'
+        """
+        annotatePeaks.pl {input.peaks} {params.genome} -gtf {input.gtf} > {output}
+        """
 
 rule unzip_genome:
     input:
@@ -118,9 +123,10 @@ rule motifs:
         peaks='results/filtered_peaks.bed',
         genome='results/genome.fa'
     output:
-        'results/motifs.html'
+        motifs = directory('results/motifs/')
+    params:
+        genome='results/genome.fa'
     conda:
         'envs/homer_env.yml'
     shell:
-        'findMotifsGenome.pl {input.peaks} {params.genome} -fasta {input.genome} -size 200 -len 8,10,12 -p 8 > {output}'
-        
+        'findMotifsGenome.pl {input.peaks} {params.genome} {output} -size 200'
