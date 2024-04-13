@@ -67,13 +67,13 @@ rule convertPeakFiles:
 
 rule intersect_peaks:
     input:
-        peak_files=expand('results/peaks/{condition}_{rep}.peaks.bed', condition=CONDITIONS, rep=REPS)
+        peak_files=expand('results/peaks/RUNX1sample_{rep}.peaks.bed', rep=REPS)
     output:
         'results/reproducible_peaks.bed'
     conda:
         'envs/bedtools_env.yml'
     shell:
-        'bedtools intersect -a {input.peak_files[0]} -b {input.peak_files[1]} | sort -u > {output}'
+        'bedtools intersect -a {input.peak_files[0]} -b {input.peak_files[1]} > {output}'
 
 rule filter_blacklist:
     input:
